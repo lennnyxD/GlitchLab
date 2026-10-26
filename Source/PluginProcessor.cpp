@@ -121,6 +121,8 @@ void GlitchLabProcessor::getStateInformation (juce::MemoryBlock& destData)
 
 void GlitchLabProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
+    if (data == nullptr || sizeInBytes <= 0) return;
+
     if (auto xml = getXmlFromBinary (data, sizeInBytes))
         if (xml->hasTagName (apvts.state.getType()))
             apvts.replaceState (juce::ValueTree::fromXml (*xml));

@@ -139,7 +139,6 @@ GlitchLabEditor::GlitchLabEditor (GlitchLabProcessor& p)
     : juce::AudioProcessorEditor (&p), proc (p)
 {
     setLookAndFeel (&look);
-    setSize (960, 660);
 
     // top bar
     for (size_t i = 0; i < presets().size(); ++i) presetBox.addItem (presets()[i].name, (int) i + 1);
@@ -197,6 +196,8 @@ GlitchLabEditor::GlitchLabEditor (GlitchLabProcessor& p)
             proc.apvts, paramSpecs()[(size_t) (P_STEP1 + i)].id, *b));
     }
 
+    // Size is set last: this triggers resized(), which needs every knob and button to exist already.
+    setSize (960, 660);
     startTimerHz (20);
 }
 
@@ -260,6 +261,12 @@ void GlitchLabEditor::paint (juce::Graphics& g)
 
 void GlitchLabEditor::resized()
 {
+    // Safety: do nothing until the whole interface has been built.
+    if (stepButtons.size() < 16) return;
+    for (int id : { P_MIX, P_GAIN, P_PROB, P_SENS, P_CHAOS, P_EVMIN, P_EVMAX, P_SLMIN, P_SLMAX, P_PITCH, P_RAMP,
+                    P_W_STUTTER, P_W_SHUFFLE, P_CRUSH, P_FXCHANCE })
+        if (knobFor[(size_t) id] == nullptr) return;
+
     auto r = getLocalBounds().reduced (14);
 
     // ---- top bar ----

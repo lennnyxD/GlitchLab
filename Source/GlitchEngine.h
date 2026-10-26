@@ -85,6 +85,8 @@ public:
     // In place, stereo. (For mono hosts pass two separate buffers and use L.)
     void process (float* L, float* R, int n)
     {
+        if (ringL.empty() || ringR.empty()) return; // prepare() has not been called yet: pass audio through untouched
+
         const float outGain = std::pow (10.f, p[P_GAIN] / 20.f);
         const float mixAmt = p[P_MIX];
         const int fadeN = std::max (8, msToSamples (3.f));
