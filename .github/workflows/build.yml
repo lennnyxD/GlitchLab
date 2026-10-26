@@ -1,0 +1,48 @@
+name: Build GlitchLab
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build plugin + tests
+        run: cmake --build build --config Release --target GlitchLab_VST3 engine_tests glitch_cli --parallel
+      - name: Run engine tests
+        run: build\Release\engine_tests.exe
+      - name: Collect
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          $v = Get-ChildItem -Path build -Recurse -Directory -Filter GlitchLab.vst3 | Select-Object -First 1
+          Copy-Item -Recurse $v.FullName dist/GlitchLab.vst3
+          Copy-Item build/Release/glitch_cli.exe dist/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GlitchLab-Windows-VST3
+          path: dist
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
+      - name: Build
+        run: cmake --build build --config Release --target GlitchLab_VST3 GlitchLab_AU engine_tests --parallel
+      - name: Run engine tests
+        run: ./build/engine_tests
+      - name: Collect
+        run: |
+          mkdir -p dist
+          cp -R "$(find build -type d -name GlitchLab.vst3 | head -1)" dist/
+          cp -R "$(find build -type d -name GlitchLab.component | head -1)" dist/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GlitchLab-macOS-VST3-AU
+          path: dist
